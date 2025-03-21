@@ -1,0 +1,33 @@
+# Node.js dependencies
+node_modules/
+package-lock.json
+
+# SSL certificates
+*.pem
+*.key
+*.crt
+*.cert
+
+
+# Compiled JavaScript
+*.js.map
+dist/
+lib/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Editor settings
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
