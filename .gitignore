@@ -7,6 +7,7 @@ package-lock.json
 *.key
 *.crt
 *.cert
+*.csr
 
 
 # Compiled JavaScript
