@@ -16,7 +16,7 @@ Traditionally, robotics prototypes rely on separate sensors that require calibra
 
 ## Prerequisites
 - ROS2 (tested with Humble)
-- Node.js (v14 or newer)
+- Node.js (v20 or newer recommended, tested with v22.14.0)
 - npm (v8 or newer)
 - Modern mobile phone if position tracking is needed WebXR support (for AR features)
 - OpenSSL (for certificate generation)
@@ -25,7 +25,8 @@ Traditionally, robotics prototypes rely on separate sensors that require calibra
 
 1. Clone the repository to your ROS2 workspace src directory:
    ```bash
-   git clone https://github.com/VedantC2307/ros2-android-sensor-bridge.git <ros2_workspace>/src/mobile_sensor
+   cd <ros2_workspace>/src/
+   git clone https://github.com/VedantC2307/ros2-android-sensor-bridge.git mobile_sensor
    ```
 
 2. Install Node.js dependencies:
@@ -34,9 +35,13 @@ Traditionally, robotics prototypes rely on separate sensors that require calibra
    npm install
    ```
 
-3. Generate SSL certificates (needed for secure camera access):
+> [!NOTE]
+> The `npm install` step is critical and must be performed before building the package with colcon.
+
+3. Generate SSL certificates (needed for secure access):
    ```bash
    cd <ros2_workspace>/src/mobile_sensor/src
+   chmod +x generate_ssl_cert.sh
    ./generate_ssl_cert.sh
    ```
 
@@ -55,7 +60,7 @@ Traditionally, robotics prototypes rely on separate sensors that require calibra
 
 1. Launch the mobile sensor node:
    ```bash
-   ros2 launch mobile_sensor mobile_sensor.launch.py
+   ros2 launch mobile_sensor mobile_sensors.launch.py
    ```
 
 2. Access the web interface on your mobile device:
@@ -76,6 +81,8 @@ The package publishes to the following ROS2 topics:
 To send text-to-speech messages to the device, publish to:
 
 - `/mobile_sensor/tts`: Text to be spoken (std_msgs/String)
+
+
 
 
 ## Contributing
