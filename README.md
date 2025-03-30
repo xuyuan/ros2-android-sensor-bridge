@@ -4,7 +4,7 @@ This package provides a ROS2 node that streams sensor data directly from an Andr
 ## Overview
 Traditionally, robotics prototypes rely on separate sensors that require calibration and integration. This package transforms an Android phone into a comprehensive sensor suite by directly publishing sensor data as ROS2 topics. The node is implemented using rclnodejs, enabling native ROS2 integration within a JavaScript environment.
 
-![Mobile Interface](resources/interface.jpeg)
+<img src="resources/interface.jpeg" alt="Mobile Interface" width="500">
 
 ## Features
 
