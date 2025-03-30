@@ -17,7 +17,7 @@ Traditionally, robotics prototypes rely on separate sensors that require calibra
 ## Prerequisites
 - ROS2 (tested with Humble)
 - Node.js (v14 or newer)
-- npm
+- npm (v8 or newer)
 - Modern mobile phone if position tracking is needed WebXR support (for AR features)
 - OpenSSL (for certificate generation)
 
@@ -25,25 +25,25 @@ Traditionally, robotics prototypes rely on separate sensors that require calibra
 
 1. Clone the repository to your ROS2 workspace src directory:
    ```bash
-   git clone https://github.com/yourusername/<package_name>.git <ros2_workspace>/src/<package_name>
+   git clone https://github.com/VedantC2307/ros2-android-sensor-bridge.git <ros2_workspace>/src/mobile_sensor
    ```
 
 2. Install Node.js dependencies:
    ```bash
-   cd <ros2_workspace>/src/<package_name>
+   cd <ros2_workspace>/src/mobile_sensor
    npm install
    ```
 
 3. Generate SSL certificates (needed for secure camera access):
    ```bash
-   cd <ros2_workspace>/src/<package_name>/src
+   cd <ros2_workspace>/src/mobile_sensor/src
    ./generate_ssl_cert.sh
    ```
 
 4. Build the ROS2 package:
    ```bash
    cd <ros2_workspace>
-   colcon build --packages-select <package_name>
+   colcon build --packages-select mobile_sensor
    ```
 
 5. Source the workspace:
@@ -55,7 +55,7 @@ Traditionally, robotics prototypes rely on separate sensors that require calibra
 
 1. Launch the mobile sensor node:
    ```bash
-   ros2 launch <package_name> mobile_sensor.launch.py
+   ros2 launch mobile_sensor mobile_sensor.launch.py
    ```
 
 2. Access the web interface on your mobile device:

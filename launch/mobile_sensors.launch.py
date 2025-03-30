@@ -9,13 +9,13 @@ from ament_index_python.packages import get_package_share_directory
 
 def generate_launch_description():
     use_sim_time = LaunchConfiguration('use_sim_time', default='false')
-    share_directory = get_package_share_directory('test')
+    share_directory = get_package_share_directory('mobile_sensor')
 
     # Path to your main JS file (using index_2.js)
     start_js_file = os.path.join(
         share_directory,
         'dist',
-        'index_2.js')
+        'index.js')
     
     cert_directory = os.path.join(share_directory, 'dist')
 
