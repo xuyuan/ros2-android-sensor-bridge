@@ -17,7 +17,7 @@ Traditionally, robotics prototypes rely on separate sensors that require calibra
 ## Prerequisites
 - ROS2 (tested with Humble)
 - Node.js (v20 or newer recommended, tested with v22.14.0)
-- npm (v8 or newer)
+- npm (v8 or newer, tested with v10.9.2)
 - Modern mobile phone if position tracking is needed WebXR support (for AR features)
 - OpenSSL (for certificate generation)
 
@@ -31,7 +31,7 @@ Traditionally, robotics prototypes rely on separate sensors that require calibra
 
 2. Install Node.js dependencies:
    ```bash
-   cd <ros2_workspace>/src/mobile_sensor
+   cd mobile_sensor
    npm install
    ```
 
@@ -53,7 +53,7 @@ Traditionally, robotics prototypes rely on separate sensors that require calibra
 
 5. Source the workspace:
    ```bash
-   source <ros2_workspace>/install/setup.bash
+   source install/setup.bash
    ```
 
 ## Usage
