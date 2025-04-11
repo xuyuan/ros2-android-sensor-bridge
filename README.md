@@ -82,8 +82,29 @@ To send text-to-speech messages to the device, publish to:
 
 - `/mobile_sensor/tts`: Text to be spoken (std_msgs/String)
 
+## Docker Deployment
 
+For easy deployment using Docker, please refer to the [Docker instructions](docker/README.md).
 
+1. Build and start the Docker container:
+   ```bash
+   docker-compose build
+   docker-compose up
+   ```
+
+2. Access the web interface on your mobile device as described in the Usage section.
+
+## Feature Status
+
+Current implementation status of features:
+
+- [x] Camera Stream - Stable
+- [x] ROS2 Topic Integration - Stable
+- [ ] Position Tracking - May have accuracy issues in environments with limited visual features
+- [ ] Speech Interface - Experimental, works best in quiet environments
+- [ ] Multi-device Support - In development
+
+> Note: This status is current as of the latest release. Check issues for detailed information.
 
 ## Contributing
 Contributions are welcome! Please feel free to submit a Pull Request.
