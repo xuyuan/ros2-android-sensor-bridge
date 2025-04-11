@@ -16,11 +16,15 @@ This directory contains Docker configuration files to easily deploy the Mobile S
    cd ros2-android-sensor-bridge
    ```
 
-2. Copy the Dockerfile, docker-entrypoint.sh, and docker-compose.yml files to the repository root.
+2. Ensure the Docker files are in place:
+   - `Dockerfile` - Uses osrf/ros:humble-desktop-full-jammy and performs all setup during build
+   - `docker-entrypoint.sh` - Minimal entrypoint that sources ROS environments
+   - `docker-compose.yml` - Defines container configuration and command
 
 3. Build and start the Docker container:
    ```bash
-   docker-compose up --build
+   docker-compose build
+   docker-compose up
    ```
 
 4. Access the web interface on your mobile device:
@@ -28,43 +32,69 @@ This directory contains Docker configuration files to easily deploy the Mobile S
    - Accept the security warnings about the self-signed certificate
    - Grant permissions for camera, microphone, and AR features when prompted
 
-## Manual Docker Build
+## Docker Architecture
 
-If you prefer to build and run the Docker container manually:
+This Docker setup is optimized for a clean runtime experience:
 
-1. Build the Docker image:
-   ```bash
-   docker build -t mobile_sensor_bridge .
-   ```
+### Build-time Setup (happens during `docker-compose build`)
+- Installation of all system dependencies
+- Installation of Node.js dependencies
+- Generation of SSL certificates
+- Building of the ROS2 package
 
-2. Run the container:
-   ```bash
-   docker run -it --rm \
-     --network host \
-     --privileged \
-     --env="DISPLAY=$DISPLAY" \
-     --env="QT_X11_NO_MITSHM=1" \
-     --volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
-     --volume="$XAUTHORITY:/root/.Xauthority" \
-     --volume="$(pwd):/ros2_ws/src/mobile_sensor" \
-     mobile_sensor_bridge
-   ```
+### Runtime (happens during `docker-compose up`)
+- ROS2 environments are sourced
+- Only the command specified in docker-compose.yml is executed
+- No setup or installation steps performed at runtime
+
+## Docker Files Overview
+
+### Dockerfile
+The Dockerfile uses `osrf/ros:humble-desktop-full-jammy` as the base image and:
+- Installs system dependencies including Node.js
+- Copies your code into the image
+- Installs Node.js dependencies
+- Generates SSL certificates
+- Builds the ROS2 package
+
+### docker-entrypoint.sh
+A minimal entrypoint script that:
+- Sources the ROS2 environment
+- Sources your workspace if available
+- Executes the command from docker-compose.yml
+
+### docker-compose.yml
+Defines the container configuration:
+- Maps port 4000 for the web interface
+- Mounts volumes for X11 display
+- Sets environment variables
+- Specifies the command to run
 
 ## Development Workflow
 
-For development, you can mount the local repository into the container and make changes in real-time:
+For development:
 
-1. Start the container in development mode:
+1. Make changes to your code locally
+
+2. Rebuild the Docker image to incorporate changes:
+   ```bash
+   docker-compose build
+   ```
+
+3. Start the container:
    ```bash
    docker-compose up
    ```
 
-2. Make changes to the code on your local machine. The changes will be reflected in the container.
+For more interactive development, you can modify the command in docker-compose.yml to start a bash shell instead:
+```yaml
+command: bash
+```
 
-3. If you need to rebuild the ROS package after making changes, you can run:
-   ```bash
-   docker exec -it mobile_sensor_bridge bash -c "cd /ros2_ws && colcon build --packages-select mobile_sensor && source install/setup.bash"
-   ```
+Then connect to the running container:
+```bash
+docker exec -it mobile_sensor_bridge bash
+```
 
 ## Troubleshooting
 
@@ -76,18 +106,17 @@ If you encounter issues with visualization tools like RViz2, make sure your host
 xhost +local:docker
 ```
 
-### SSL Certificate Issues
+### Build Issues with Source Command
 
-If the SSL certificate generation fails, you can manually generate certificates:
+If you see errors related to the source command in the Dockerfile, ensure you're using bash:
 
-```bash
-docker exec -it mobile_sensor_bridge bash -c "cd /ros2_ws/src/mobile_sensor/src && ./generate_ssl_cert.sh"
+```dockerfile
+RUN bash -c "source /opt/ros/humble/setup.bash && command"
 ```
 
-### Node.js Dependency Issues
+### Network Connectivity Issues
 
-If you encounter Node.js dependency issues, you can manually install dependencies:
-
-```bash
-docker exec -it mobile_sensor_bridge bash -c "cd /ros2_ws/src/mobile_sensor && npm install"
-```
+The container uses bridge networking and exposes port 4000. If you have trouble connecting:
+- Check that your firewall allows connections to port 4000
+- Verify your computer's IP address is accessible from your mobile device
+- Make sure you're using HTTPS (not HTTP) to connect
