@@ -9,10 +9,11 @@ services:
       - ./:/ros2_ws/src/mobile_sensor
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - ${XAUTHORITY:-$HOME/.Xauthority}:/root/.Xauthority
-    # network_mode: host  # Comment out host network mode
+    network_mode: host  # Comment out host network mode
+    ipc: host
     # Use bridge network (default) with explicit port mapping
-    ports:
-      - "4000:4000"  # Web interface
+    #ports:
+    #  - "4000:4000"  # Web interface
       # Add additional ports as needed, for example:
       # - "9090:9090"  # For rosbridge if you're using it
       # - "11311:11311"  # For ROS master if needed
