@@ -33,7 +33,9 @@ WORKDIR /ros2_ws
 COPY . /ros2_ws/src/mobile_sensor/
 
 # Install Node.js dependencies during build
-RUN cd /ros2_ws/src/mobile_sensor && npm install
+RUN cd /ros2_ws/src/mobile_sensor && \
+    . /opt/ros/humble/setup.sh && \
+    npm install
 
 # Generate SSL certificates during build
 RUN cd /ros2_ws/src/mobile_sensor/src && \
