@@ -84,7 +84,7 @@ class AudioManager {
                                 this.logTranscription(prompt);
                             }
                             this.finalTranscripts = "";
-                        }, 2000);timestamp
+                        }, 2000);
                     }
                 }
             };
@@ -133,4 +133,3 @@ class AudioManager {
 }
 
 window.AudioManager = AudioManager;
-timestamp
