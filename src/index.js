@@ -47,6 +47,13 @@ async function initRos() {
     { qos: { depth: 10 } }
   );
   
+  // Add GNSS publisher
+  rosPublishers.gnss = node.createPublisher(
+    'sensor_msgs/msg/NavSatFix',
+    'mobile_sensor/gnss',
+    { qos: { depth: 10 } }
+  );
+  
   // Add string subscriber for TTS
   node.createSubscription(
     'std_msgs/msg/String',
@@ -89,6 +96,7 @@ const wssPose = new WebSocket.Server({ noServer: true });
 const wssCamera = new WebSocket.Server({ noServer: true });
 const wssTTS = new WebSocket.Server({ noServer: true });
 const wssAudio = new WebSocket.Server({ noServer: true });
+const wssGNSS = new WebSocket.Server({ noServer: true });
 
 // Handle upgrade requests to separate WebSocket connections
 server.on('upgrade', (request, socket, head) => {
@@ -113,6 +121,11 @@ server.on('upgrade', (request, socket, head) => {
     case '/audio':
       wssAudio.handleUpgrade(request, socket, head, (ws) => {
         wssAudio.emit('connection', ws, request);
+      });
+      break;
+    case '/gnss':
+      wssGNSS.handleUpgrade(request, socket, head, (ws) => {
+        wssGNSS.emit('connection', ws, request);
       });
       break;
     default:
@@ -140,24 +153,54 @@ wssPose.on('connection', (ws) => {
             stamp: stamp,
             frame_id: 'odom'
           },
-          pose: {
-            position: {
-              x: data.pose.position.x,
-              y: data.pose.position.y,
-              z: data.pose.position.z
-            },
-            orientation: {
-              x: data.pose.orientation.x,
-              y: data.pose.orientation.y,
-              z: data.pose.orientation.z,
-              w: data.pose.orientation.w
-            }
-          }
+          pose: data.pose
         };
         rosPublishers.pose.publish(poseMsg);
       }
     } catch (err) {
       console.error('Error processing pose message:', err);
+    }
+  });
+});
+
+// Handle GNSS data WebSocket connections
+wssGNSS.on('connection', (ws) => {
+  console.log('New GNSS data WebSocket client connected');
+  ws.on('message', async (message) => {
+    try {
+      const data = JSON.parse(message);
+      if (data.position) {
+        const stamp = {
+          sec: Math.floor(data.timestamp / 1000),
+          nanosec: (data.timestamp % 1000) * 1000000
+        };
+        
+        const accuracy2 = data.position.coords.accuracy *  data.position.coords.accuracy;
+        
+        let altitude = 0;
+        let status = 0; // STATUS_FIX
+        if (data.position.coords.altitude) {
+          altitude = data.position.coords.altitude;
+          status = 1; // STATUS_SBAS_FIX
+        }
+        
+        // Create and publish ROS2 pose message
+        const msg = {
+          header: {
+            stamp: stamp,
+            frame_id: 'gnss'
+          },
+          latitude: data.position.coords.latitude,
+          longitude: data.position.coords.longitude,
+          altitude: altitude,
+          status: {status: status},
+          position_covariance_type: 1,
+          position_covariance: [accuracy2, 0, 0, 0, accuracy2, 0, 0, 0, accuracy2]
+        };
+        rosPublishers.gnss.publish(msg);
+      }
+    } catch (err) {
+      console.error('Error processing GNSS message:', err);
     }
   });
 });
@@ -294,6 +337,7 @@ function shutdown() {
   wssCamera.clients.forEach(client => client.close());
   wssTTS.clients.forEach(client => client.close());
   wssAudio.clients.forEach(client => client.close());
+  wssGNSS.clients.forEach(client => client.close());
 
   if (rclnodejs.isShutdown() === false) {
     rclnodejs.shutdown();

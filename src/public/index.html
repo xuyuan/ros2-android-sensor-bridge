@@ -170,6 +170,11 @@
           <div class="connection-status" id="pose-status"></div>
         </label>
         <label>
+          <input type="checkbox" id="gnss-select" checked>
+          GNSS
+          <div class="connection-status" id="gnss-status"></div>
+        </label>
+        <label>
           <input type="checkbox" id="audio-select" checked>
           Microphone
           <div class="connection-status" id="audio-status"></div>
@@ -192,17 +197,23 @@
       const xrButton = document.getElementById('xr-button');
       const poseDiv = document.getElementById('pose');
       let poseWs = null;  // Separate WebSocket for pose data
+      let gnssWs = null;
       let cameraWs = null;  // Separate WebSocket for camera data
+      let cameraInterval = null;
+      let cameraSendingActive = false;
       let tts = null;
       let isSessionActive = false;
       const cameraManager = new CameraManager();
       const audioManager = new AudioManager();
       let audioWs = null;
+      let gnssInterval = null;
+      let gnssSendingActive = false;
 
       // Add sensor selection states
       let enabledSensors = {
         camera: true,
         pose: true,
+        gnss: true,
         audio: true,
         tts: true
       };
@@ -221,6 +232,15 @@
         enabledSensors.pose = e.target.checked;
         poseDiv.style.display = e.target.checked ? 'block' : 'none';
         checkSupported(); // Recheck AR support when pose tracking is toggled
+      });
+      
+      document.getElementById('gnss-select').addEventListener('change', (e) => {
+        enabledSensors.gnss = e.target.checked;
+        if (!e.target.checked && gnssInterval) {
+          stopGNSSSending();
+        } else if (e.target.checked && isSessionActive) {
+          startGNSSSending();
+        }
       });
 
       document.getElementById('audio-select').addEventListener('change', (e) => {
@@ -315,6 +335,35 @@
                 if (enabledSensors.pose && isSessionActive) {
                   updateConnectionStatus('pose', 'connecting');
                   connectPoseWebSocket();
+                }
+              }, 1000);
+            }
+          };
+        }
+        
+        if (enabledSensors.gnss) {
+          updateConnectionStatus('gnss', 'connecting');
+          // Connect GNSS WebSocket
+          gnssWs = new WebSocket(`${baseUrl}/gnss`);
+          gnssWs.onopen = () => {
+            console.log('GNSS WebSocket connected');
+            updateConnectionStatus('gnss', 'connected');
+            if (!gnssInterval && isSessionActive) {
+              startGNSSSending();
+            }
+          };
+          gnssWs.onerror = (error) => {
+            console.error('GNSS WebSocket error:', error);
+            updateConnectionStatus('gnss', 'disconnected');
+          };
+          gnssWs.onclose = () => {
+            updateConnectionStatus('gnss', 'disconnected');
+            if (isSessionActive) {
+              console.log('GNSS WebSocket closed, reconnecting...');
+              setTimeout(() => {
+                if (enabledSensors.gnss && isSessionActive) {
+                  updateConnectionStatus('gnss', 'connecting');
+                  connectGNSSWebSocket();
                 }
               }, 1000);
             }
@@ -420,6 +469,46 @@
           cameraInterval = null;
         }
       }
+      
+      function startGNSSSending() {
+        if (gnssSendingActive) return;
+        
+        gnssSendingActive = true;
+        console.log('startGNSSSending');
+        
+        function sendGNSS(position) {
+          console.log('sendGNSS', position);
+          if (gnssWs && gnssWs.readyState === WebSocket.OPEN) {
+            if (position) {
+              gnssWs.send(JSON.stringify({
+                timestamp: Date.now(),
+                position: position
+              }));
+            }
+          }
+        }
+        
+        const options = {enableHighAccuracy: true,
+                        timeout: 5000,
+                        maximumAge: 0,
+                        };
+        
+        gnssInterval = setInterval(() => {
+          if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(sendGNSS, console.log, options);
+          } else { 
+            console.error("Geolocation is not supported by this browser.");
+          }
+        }, 1000);
+      }
+
+      function stopGNSSSending() {
+        gnssSendingActive = false;
+        if (gnssInterval) {
+          clearInterval(gnssInterval);
+          gnssInterval = null;
+        }
+      }
 
       // Modify startSession to handle both AR and non-AR cases
       async function startSession() {
@@ -472,7 +561,7 @@
         console.log('Session ending: Cleaning up resources...');
         
         // Reset all connection statuses
-        ['pose', 'camera', 'audio', 'tts'].forEach(type => {
+        ['pose', 'gnss', 'camera', 'audio', 'tts'].forEach(type => {
           updateConnectionStatus(type, '');
         });
         
@@ -480,12 +569,12 @@
         document.body.classList.remove('session-active');
         
         // Clean up WebSockets
-        [poseWs, cameraWs, audioWs].forEach(ws => {
+        [poseWs, gnssWs, cameraWs, audioWs].forEach(ws => {
           if (ws) {
             ws.close();
           }
         });
-        poseWs = cameraWs = audioWs = null;
+        poseWs = gnssWs = cameraWs = audioWs = null;
 
         // Clean up managers
         cameraManager.stopCamera();
