@@ -35,7 +35,7 @@ async function initRos() {
 
   // Add pose publisher
   rosPublishers.pose = node.createPublisher(
-    'geometry_msgs/msg/Pose',
+    'geometry_msgs/msg/PoseStamped',
     'mobile_sensor/pose',
     { qos: { depth: 10 } }
   );
@@ -127,18 +127,31 @@ wssPose.on('connection', (ws) => {
     try {
       const data = JSON.parse(message);
       if (data.pose) {
+        // Generate current timestamp
+        const now = Date.now();
+        const stamp = {
+          sec: Math.floor(now / 1000),
+          nanosec: (now % 1000) * 1000000
+        };
+        
         // Create and publish ROS2 pose message
         const poseMsg = {
-          position: {
-            x: data.pose.position.x,
-            y: data.pose.position.y,
-            z: data.pose.position.z
+          header: {
+            stamp: stamp,
+            frame_id: 'odom'
           },
-          orientation: {
-            x: data.pose.orientation.x,
-            y: data.pose.orientation.y,
-            z: data.pose.orientation.z,
-            w: data.pose.orientation.w
+          pose: {
+            position: {
+              x: data.pose.position.x,
+              y: data.pose.position.y,
+              z: data.pose.position.z
+            },
+            orientation: {
+              x: data.pose.orientation.x,
+              y: data.pose.orientation.y,
+              z: data.pose.orientation.z,
+              w: data.pose.orientation.w
+            }
           }
         };
         rosPublishers.pose.publish(poseMsg);
