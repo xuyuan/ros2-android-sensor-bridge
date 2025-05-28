@@ -2,7 +2,6 @@ class CameraManager {
     constructor() {
         this.cameraStarted = false;
         this.videoTrack = null;
-        this.lastCameraFrame = null;
     }
 
     async startCamera(ws, isSessionActive) {
@@ -65,10 +64,10 @@ class CameraManager {
 
                     if (ws && ws.readyState === WebSocket.OPEN) {
                         try {
-                            this.lastCameraFrame = await processFrame(videoFrame);
+                            let lastCameraFrame = await processFrame(videoFrame);
                             ws.send(JSON.stringify({
                                 timestamp: Date.now(),
-                                camera: this.lastCameraFrame,
+                                camera: lastCameraFrame,
                                 width: canvas.width,
                                 height: canvas.height
                             }));
@@ -95,13 +94,6 @@ class CameraManager {
             this.videoTrack = null;
         }
         this.cameraStarted = false;
-        this.lastCameraFrame = null;
-    }
-
-    getLastFrame() {
-        const frame = this.lastCameraFrame;
-        this.lastCameraFrame = null;
-        return frame;
     }
 }
 

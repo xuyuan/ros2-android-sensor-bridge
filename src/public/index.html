@@ -199,8 +199,6 @@
       let poseWs = null;  // Separate WebSocket for pose data
       let gnssWs = null;
       let cameraWs = null;  // Separate WebSocket for camera data
-      let cameraInterval = null;
-      let cameraSendingActive = false;
       let tts = null;
       let isSessionActive = false;
       const cameraManager = new CameraManager();
@@ -221,11 +219,6 @@
       // Add checkbox event listeners
       document.getElementById('camera-select').addEventListener('change', (e) => {
         enabledSensors.camera = e.target.checked;
-        if (!e.target.checked && cameraInterval) {
-          stopCameraSending();
-        } else if (e.target.checked && isSessionActive) {
-          startCameraSending();
-        }
       });
 
       document.getElementById('pose-select').addEventListener('change', (e) => {
@@ -377,9 +370,6 @@
           cameraWs.onopen = () => {
             console.log('Camera WebSocket connected');
             updateConnectionStatus('camera', 'connected');
-            if (!cameraInterval && isSessionActive) {
-              startCameraSending();
-            }
           };
           cameraWs.onerror = (error) => {
             console.error('Camera WebSocket error:', error);
@@ -440,33 +430,6 @@
         // Update TTS status
         if (enabledSensors.tts) {
           updateConnectionStatus('tts', 'connecting');
-        }
-      }
-
-      function startCameraSending() {
-        if (cameraSendingActive) return;
-        
-        cameraSendingActive = true;
-        cameraInterval = setInterval(() => {
-          if (cameraWs && cameraWs.readyState === WebSocket.OPEN) {
-            const cameraFrame = cameraManager.getLastFrame();
-            if (cameraFrame) {
-              cameraWs.send(JSON.stringify({
-                timestamp: Date.now(),
-                camera: cameraFrame,
-                width: cameraManager.width || 640,
-                height: cameraManager.height || 480
-              }));
-            }
-          }
-        }, 30);
-      }
-
-      function stopCameraSending() {
-        cameraSendingActive = false;
-        if (cameraInterval) {
-          clearInterval(cameraInterval);
-          cameraInterval = null;
         }
       }
       
