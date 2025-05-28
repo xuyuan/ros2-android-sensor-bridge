@@ -21,8 +21,13 @@ async function initRos() {
   const node = rclnodejs.createNode('mobile_sensor_node');
   
   // Create publishers for camera data
+  // rosPublishers.compressed = node.createPublisher(
+  //   'sensor_msgs/msg/CompressedImage',
+  //   'camera/image_raw/compressed',
+  //   { qos: { depth: 10 } }
+  // );
   rosPublishers.compressed = node.createPublisher(
-    'sensor_msgs/msg/CompressedImage',
+    'ffmpeg_image_transport_msgs/msg/FFMPEGPacket',
     'camera/image_raw/compressed',
     { qos: { depth: 10 } }
   );
@@ -218,8 +223,8 @@ wssCamera.on('connection', (ws) => {
         
         try {
           // Convert base64 string to binary data
-          const base64Data = data.camera.split(',')[1]; // Remove data URL prefix if present
-          const imageBuffer = Buffer.from(base64Data, 'base64');
+          // const base64Data = data.camera.split(',')[1]; // Remove data URL prefix if present
+          // const imageBuffer = Buffer.from(base64Data, 'base64');
           
           // Extract image dimensions if available, or use defaults
           const width = data.width || 640;
@@ -239,12 +244,23 @@ wssCamera.on('connection', (ws) => {
           };
           
           // 1. Publish CompressedImage message (most efficient for JPEG data)
+          // const compressedMsg = {
+          //   header: header,
+          //   format: 'jpeg',
+          //   data: Array.from(imageBuffer)
+          // };
           const compressedMsg = {
             header: header,
-            format: 'jpeg',
-            data: Array.from(imageBuffer)
+            width: width,
+            height: height,
+            encoding: 'h264',
+            // pts: BigInt(0),
+            // flags: 0,
+            is_bigendian: false,
+            data: Array.from(data.camera)
           };
           rosPublishers.compressed.publish(compressedMsg);
+          console.log('ROS2 CompressedImage message published');
           
           // 2. Publish CameraInfo message
           const cameraInfoMsg = {

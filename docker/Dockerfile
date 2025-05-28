@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y \
     python3-colcon-common-extensions \
     python3-rosdep \
     ros-humble-rmw-cyclonedds-cpp \
+    ros-humble-ffmpeg-image-transport \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Node.js and npm (Setting up the repository for the latest LTS version)
